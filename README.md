@@ -1,2 +1,2 @@
 
-![Raddoo definition](blob/master/protocol.md)
+![Raddoo definition](raddoo.png)
