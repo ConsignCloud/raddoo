@@ -462,9 +462,17 @@ def add(x, y):
     return x + y
 
 
+def inc(x):
+    return x + 1
+
+
 @curry(2)
 def subtract(x, y):
     return x - y
+
+
+def dec(x):
+    return x - 1
 
 
 @curry(2)
