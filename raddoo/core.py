@@ -212,8 +212,8 @@ def prop_eq(prop_name, val, obj):
 
 
 @curry(3)
-def path_eq(_path, val, obj):
-    return path(_path, obj) == val
+def path_eq(path, val, obj):
+    return get_path(path, obj) == val
 
 
 @curry(2)
@@ -682,13 +682,13 @@ def copy_prop(from_prop, to_prop, data):
 
 @curry(3)
 def copy_path(from_path, to_path, data):
-    return assoc_path(to_path, path(from_path, data), data)
+    return assoc_path(to_path, get_path(from_path, data), data)
 
 
 @curry(3)
 def rename_path(from_path, to_path, data):
     # find the value
-    value = path(from_path, data)
+    value = get_path(from_path, data)
 
     # Remove it from the data structure
     update_path(from_path[:-1], omit.c(from_path[-1]), data)
@@ -699,8 +699,8 @@ def rename_path(from_path, to_path, data):
 
 @curry(3)
 def update_path(path, fn, data):
-    value = path(path, data)
-    parent = path(path[:-1], data) if len(path) > 1 else data
+    value = get_path(path, data)
+    parent = get_path(path[:-1], data) if len(path) > 1 else data
     args = [value, parent, data][:arity(fn)]
 
     return assoc_path(path, fn(*args), data)
@@ -1033,3 +1033,7 @@ def timed(label):
     yield
 
     print(label, time.time() - now)
+
+
+def now():
+    return datetime.utcnow().isoformat() + 'Z'
