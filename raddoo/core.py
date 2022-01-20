@@ -824,14 +824,11 @@ def pluralize(n, label, pluralLabel=None):
 
 class Obj(object):
     def __init__(self, **data):
-        self.__data = data
+        self.data = data
 
     def __getattr__(self, name):
-        if name == '__data':
-            return super(Obj, self).__getattr__(name)
-
         try:
-            return self.__data[name]
+            return self.data[name]
         except KeyError:
             raise AttributeError(name)
 

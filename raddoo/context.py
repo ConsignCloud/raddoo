@@ -66,13 +66,7 @@ def scoped(*ctxs):
                 outer[ctx.ns].register()
 
 
-class Global(object):
-    def __init__(self):
-        self.data = {}
-
-    def __getattr__(self, name):
-        return self.data[name]
-
+class Global(Obj):
     def __setattr__(self, name, value):
         if name != 'data':
             self.data[name] = value
