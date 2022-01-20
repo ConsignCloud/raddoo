@@ -1,6 +1,6 @@
 from .core import partial, identity
 
-Default = 'utils/multimethod/Default'
+Default = object()
 
 no_method_t = 'No method found for "{}" and dispatch value "{}"'
 not_callable_t = "Method provided to {} for {} is not callable (got {})"

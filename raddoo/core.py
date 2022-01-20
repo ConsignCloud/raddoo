@@ -1,11 +1,10 @@
-import uuid, re
-from copy import copy
-from collections import OrderedDict
-from inspect import signature
-from itertools import islice
-from contextlib import contextmanager
-import itertools, os, sys, random, time
-from _collections_abc import dict_keys, dict_values
+import uuid as _uuid
+import itertools as _itertools
+import random as _random
+import collections as _collections
+import inspect as _inspect
+import copy as _copy
+import _collections_abc
 
 
 UUID_PATTERN = "\
@@ -49,7 +48,7 @@ def partial(fn, *args, **kwargs):
 
 
 def arity(fn):
-    return getattr(fn, '_arity', len(signature(fn).parameters))
+    return getattr(fn, '_arity', len(_inspect.signature(fn).parameters))
 
 
 @curry(2)
@@ -63,10 +62,6 @@ def self_arity(fn):
 
 def unary(fn):
     return n_ary(1, fn)
-
-
-def binary(fn):
-    return n_ary(2, fn)
 
 
 @curry(2)
@@ -115,6 +110,7 @@ def find(fn, data):
         if fn(item):
             return item
 
+
 @curry(2)
 def find_index(fn, xs):
     for idx, x in enumerate(xs):
@@ -128,7 +124,7 @@ def uniq(data):
 
 @curry(2)
 def uniq_by(fn, data):
-    result = OrderedDict()
+    result = _collections.OrderedDict()
     for item in data:
         key = fn(item)
         result.setdefault(key, item)
@@ -142,19 +138,13 @@ def index_by(get_key, coll):
 
 
 @curry(2)
-def index_of(item, coll):
-    for idx, value in enumerate(coll):
-        if value == item:
-            return idx
+def index_of(value, xs):
+    if type(xs) != dict:
+        xs = enumerate(xs)
 
-    return -1
-
-
-@curry(2)
-def map_obj_indexed(fn, obj):
-    fn = self_arity(fn)
-
-    return {key: fn(value, key, obj) for key, value in obj.items()}
+    for k, v in xs:
+        if v == value:
+            return k
 
 
 @curry(2)
@@ -212,31 +202,41 @@ def prop_eq(prop_name, val, obj):
 
 
 @curry(3)
+def prop_ne(prop_name, val, obj):
+    return prop(prop_name, obj) != val
+
+
+@curry(3)
 def path_eq(path, val, obj):
     return get_path(path, obj) == val
 
 
+@curry(3)
+def path_ne(path, val, obj):
+    return get_path(path, obj) != val
+
+
 @curry(2)
-def concat(*l):
-    return [item for sublist in l for item in sublist]
+def concat(*lists):
+    return [item for sublist in lists for item in sublist]
 
 
-def flatten(l):
-    if not hasattr(l, '__iter__') or isinstance(l, (dict, str)):
-        return [l]
+def flatten(lists):
+    if not hasattr(lists, '__iter__') or isinstance(lists, (dict, str)):
+        return [lists]
 
     r = []
-    for x in l:
+    for x in lists:
         r.extend(flatten(x))
 
     return r
 
 
 @curry(2)
-def without(sans, target):
+def without(sans, xs):
     sans = set(sans)
 
-    return [element for element in target if element not in sans]
+    return [x for x in xs if x not in sans]
 
 
 @curry(2)
@@ -277,7 +277,7 @@ def merge(*dicts):
 
 
 @curry(2)
-def zip_obj(keys, values):
+def zip_dict(keys, values):
     result = {}
     for idx, key in enumerate(keys):
         result[key] = values[idx]
@@ -304,7 +304,7 @@ def omit(keys, data):
 
 @curry(3)
 def assoc(key, value, data):
-    result = copy(data)
+    result = _copy.copy(data)
 
     if type(data) == dict:
         result.update({key: value})
@@ -323,7 +323,7 @@ def assoc_path(_path, value, data):
 
     value = assoc_path(tail, value, data.get(head, {})) if tail else value
 
-    result = copy(data)
+    result = _copy.copy(data)
     result[head] = value
 
     return result
@@ -411,17 +411,6 @@ def pipe(*fns):
     return _piped
 
 
-def invoker(arity, method_name):
-    @curry(arity)
-    def invoke(*args):
-        obj = args[-1]
-        method = getattr(obj, method_name)
-
-        return method(*args[:-1])
-
-    return invoke
-
-
 @curry(3)
 def replace(find, replace, value):
     return value.replace(find, replace)
@@ -440,12 +429,15 @@ def identity(val):
 
 
 def difference(l1, l2):
-    return [item for item in l1 if item not in l2]
+    return set(l1).difference(l2)
 
 
-@curry(3)
-def flip(fn, arg1, arg2):
-    return fn(arg2, arg1)
+def intersection(l1, l2):
+    return set(l1).intersection(l2)
+
+
+def union(l1, l2):
+    return set(l1).union(l2)
 
 
 @curry(2)
@@ -453,8 +445,8 @@ def nth(idx, xs):
     return xs[idx]
 
 
-def last(l):
-    return l[-1] if l else None
+def last(xs):
+    return xs[-1] if xs else None
 
 
 @curry(2)
@@ -476,7 +468,7 @@ def dec(x):
 
 
 @curry(2)
-def obj_of(k, v):
+def dict_of(k, v):
     return {k: v}
 
 
@@ -514,12 +506,12 @@ def default_to(default, x):
 
 @curry(2)
 def drop(n, xs):
-    return islice(xs, n, None)
+    return _itertools.islice(xs, n, None)
 
 
 @curry(2)
 def take(n, xs):
-    return islice(xs, n)
+    return _itertools.islice(xs, n)
 
 
 def complement(f):
@@ -536,8 +528,8 @@ def first(xs):
         return x
 
 
-def uuid4():
-    return str(uuid.uuid4())
+def random_uuid():
+    return str(_uuid.uuid4())
 
 
 def ensure_list(x):
@@ -546,7 +538,7 @@ def ensure_list(x):
     if t == list:
         return x
 
-    if t in {set, dict_keys, dict_values}:
+    if t in {set, _collections_abc.dict_keys, _collections_abc.dict_values}:
         return list(x)
 
     return [x]
@@ -554,49 +546,6 @@ def ensure_list(x):
 
 def concat_all(lists):
     return concat(*lists)
-
-
-def diff_collections(old, new):
-    diff = {
-        'added': [],
-        'changed': [],
-        # Anything in old that's gone in new
-        'removed': [
-            old_item for old_item in old
-            if not find(prop_eq.c('id', old_item['id']), new)
-        ],
-    }
-
-    for new_item in new:
-        old_item = find(prop_eq.c('id', new_item['id']), old)
-
-        # Anything in new that's gone in old
-        if not old_item:
-            diff['added'].append(new_item)
-        # Anything that changed but is still around
-        elif new_item != old_item:
-            diff['changed'].append({
-                'from': old_item,
-                'to': new_item,
-            })
-
-    return diff
-
-
-def diff_dicts(a, b):
-    diff = []
-
-    for k in uniq(concat(a.keys(), b.keys())):
-        if k not in a and k in b:
-            diff.append(f'key "{k}" is new. New value: {b[k]}')
-        elif k not in b and k in a:
-            diff.append(f'key "{k}" was removed. Old value: {a[k]}')
-        elif a[k] != b[k]:
-            diff.append(
-                f'key "{k}" was changed. Old value: {a[k]}; New value: {b[k]}'
-            )
-
-    return diff
 
 
 def safe_divide(x, y):
@@ -672,7 +621,7 @@ def merge_right_fn(result, d2):
 
 @curry(3)
 def rename_prop(from_prop, to_prop, data):
-    return modify(data, omit=[from_prop], overrides={to_prop: data[from_prop]})
+    return omit([from_prop], merge(data, {to_prop: data[from_prop]}))
 
 
 @curry(3)
@@ -711,7 +660,7 @@ def update_in(key, fn, data):
     return update_path([key], fn, data)
 
 
-def extract(key, data):
+def pop(key, data):
     return data.get(key), omit([key], data)
 
 
@@ -721,7 +670,7 @@ def modify_keys_recursive(fn, value):
         return mapl(modify_keys_recursive.c(fn), value)
 
     if isinstance(value, dict):
-        return zip_obj(
+        return zip_dict(
             mapl(fn, value.keys()),
             mapl(modify_keys_recursive.c(fn), value.values())
         )
@@ -735,7 +684,7 @@ def modify_values_recursive(fn, value):
         return mapl(modify_values_recursive.c(fn), value)
 
     if isinstance(value, dict):
-        return zip_obj(
+        return zip_dict(
             value.keys(),
             mapl(modify_values_recursive.c(fn), value.values())
         )
@@ -755,28 +704,15 @@ def do_pipe(value, fns):
 
 
 @curry(2)
-def clog(label, v):
-    print(label, v)
-    return v
-
-
-@curry(2)
-def fill_dict(keys, value):
+def fill(keys, value):
     return {key: value for key in keys}
-
-
-@curry(2)
-def find_key(value, d):
-    for k, v in d:
-        if v == value:
-            return k
 
 
 def ichunk(n, iterable):
     iterator = iter(iterable)
 
     while True:
-        chunk = list(itertools.islice(iterator, n))
+        chunk = list(_itertools.islice(iterator, n))
 
         if not chunk:
             return
@@ -789,39 +725,6 @@ def do_all(iterable):
         pass
 
 
-def parse_bool(value):
-    if type(value) == bool:
-        return value
-
-    value = str(value).lower()
-
-    if value in ['1', 'yes', 'true', 'y', 't']:
-        return True
-    elif value in ['0', 'no', 'false', 'n', 'f']:
-        return False
-
-
-def delimit(values, conjunction='and'):
-    if len(values) == 0:
-        return ''
-    elif len(values) == 1:
-        return values[0]
-    elif len(values) == 2:
-        return "{} {} {}".format(values[0], conjunction, values[1])
-    elif len(values) > 8:
-        return "{}, {} {} others".format(
-            ", ".join(values[:6]),
-            conjunction,
-            len(values) - 6
-        )
-
-    return "{}, {} {}".format(", ".join(values[:-1]), conjunction, values[-1])
-
-
-def pluralize(n, label, pluralLabel=None):
-    return label if n == 1 else (pluralLabel or '{}s'.format(label))
-
-
 class Obj(object):
     def __init__(self, **data):
         self.data = data
@@ -831,11 +734,6 @@ class Obj(object):
             return self.data[name]
         except KeyError:
             raise AttributeError(name)
-
-
-@curry(3)
-def prop_ne(prop_name, val, obj):
-    return prop(prop_name, obj) != val
 
 
 def ensure_bytes(s, encoding='utf-8'):
@@ -861,50 +759,6 @@ def eager(fn):
         return list(fn(*args, **kwargs))
 
     return wrapper
-
-
-def ellipsize(s, l, suffix='...'):
-    if len(s) < l * 1.1:
-        return s
-
-    while len(s) > l and ' ' in s:
-        s, *_ = s.rpartition(' ')
-
-    return s + suffix
-
-
-def to_snake(value):
-    return re.sub(
-        '([a-z0-9])([A-Z])',
-        r'\1_\2',
-        re.sub(
-            '(^_)_*([A-Z][a-z]+)',
-            r'\1_\2',
-            re.sub(r' +', '_', value),
-        )
-    ).lower()
-
-
-def to_human(value):
-    return to_snake(value).replace("_", " ").title()
-
-
-def to_kebab(value):
-    return to_snake(value).replace('_', '-')
-
-
-def to_screaming_snake(value):
-    return to_snake(value).upper()
-
-
-def to_camel(value):
-    first, *rest = to_snake(value).split('_')
-
-    return first + "".join([word.capitalize() for word in rest])
-
-
-def to_pascal(value):
-    return "".join([word.capitalize() for word in to_snake(value).split('_')])
 
 
 def switcher(k, m):
@@ -944,59 +798,9 @@ def contained(xs, x):
     return x in xs
 
 
-def env(k, **kw):
-    if 'default' in kw and k not in os.environ:
-        return kw['default']
-
-    v = os.environ[k]
-
-    if v.lower() == 'true':
-        return True
-
-    if v.lower() == 'false':
-        return False
-
-    try:
-        return int(v)
-    except ValueError:
-        pass
-
-    try:
-        return float(v)
-    except ValueError:
-        pass
-
-    return v
-
-
 # https://stackoverflow.com/a/13018842/1467342
 def bidi_hash(n):
     return ((0x0000FFFF & n) << 16) + ((0xFFFF0000 & n) >> 16)
-
-
-class Progress(object):
-    width = 80
-
-    def __init__(self, total):
-        self.total = max(1, total)
-
-    def show(self, i):
-        j = round(i) / self.total
-        spinner = ["# ", " #"][round(i) % 2]
-        filled_w = self.width * j
-        empty_w = self.width - filled_w
-        fill = '=' * round(filled_w)
-        space = ' ' * round(empty_w)
-
-        sys.stdout.write('\r')
-        sys.stdout.write(f"{spinner}[{fill}{space}] {int(100 * j)}%")
-        sys.stdout.flush()
-
-    def done(self):
-        sys.stdout.write('\r')
-        sys.stdout.write(' ' * (self.width + 8))
-        sys.stdout.write('\r')
-        sys.stdout.flush()
 
 
 @curry(2)
@@ -1004,10 +808,10 @@ def mapcat(f, xs):
     return [y for x in xs for y in f(x)]
 
 
-def get_subclasses(cls):
+def subclasses(cls):
     for subclass in cls.__subclasses__():
         yield subclass
-        yield from get_subclasses(subclass)
+        yield from subclasses(subclass)
 
 
 @curry(2)
@@ -1018,19 +822,6 @@ def pick_values(ks, x):
 def shuffled(xs):
     xs = list(xs)
 
-    random.shuffle(xs)
+    _random.shuffle(xs)
 
     return xs
-
-
-@contextmanager
-def timed(label):
-    now = time.time()
-
-    yield
-
-    print(label, time.time() - now)
-
-
-def now():
-    return datetime.utcnow().isoformat() + 'Z'

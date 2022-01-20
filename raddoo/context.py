@@ -1,4 +1,4 @@
-from contextlib import contextmanager
+import contextlib as _ctx
 from .core import get_path, merge, Obj
 
 
@@ -39,13 +39,13 @@ class Context(Obj):
         self.unregister()
         self.register()
 
-    @contextmanager
+    @_ctx.contextmanager
     def scoped(self):
         with scoped(self):
             yield
 
 
-@contextmanager
+@_ctx.contextmanager
 def scoped(*ctxs):
     outer = {}
     for ctx in ctxs:
