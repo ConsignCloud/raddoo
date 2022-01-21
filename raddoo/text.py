@@ -12,7 +12,7 @@ def parse_bool(value):
     elif value in ['0', 'no', 'false', 'n', 'f']:
         return False
 
-    return bool(value)
+    raise ValueError(value)
 
 
 def delimit(values, conjunction='and'):
