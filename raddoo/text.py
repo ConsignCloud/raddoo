@@ -1,7 +1,7 @@
 import re
 
 
-def parse_bool(value):
+def parse_bool(value, strict=True):
     if type(value) == bool:
         return value
 
@@ -12,7 +12,8 @@ def parse_bool(value):
     elif value in ['0', 'no', 'false', 'n', 'f']:
         return False
 
-    raise ValueError(value)
+    if strict:
+        raise ValueError(value)
 
 
 def delimit(values, conjunction='and'):
