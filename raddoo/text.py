@@ -78,3 +78,4 @@ def to_camel(value):
 
 def to_pascal(value):
     return "".join([word.capitalize() for word in to_snake(value).split('_')])
+
