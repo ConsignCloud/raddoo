@@ -353,6 +353,15 @@ def any_fn(fn, coll):
 
 
 @curry(2)
+def none_fn(fn, coll):
+    for x in coll:
+        if fn(x):
+            return False
+
+    return True
+
+
+@curry(2)
 def all_pass(fx, x):
     for fn in fx:
         if not fn(x):
@@ -368,6 +377,15 @@ def any_pass(fx, x):
             return True
 
     return False
+
+
+@curry(2)
+def none_pass(fx, x):
+    for fn in fx:
+        if fn(x):
+            return False
+
+    return True
 
 
 @curry(2)
