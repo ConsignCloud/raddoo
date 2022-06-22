@@ -807,8 +807,19 @@ def switcher(k, m):
     raise ValueError(f'Unknown key for switcher: {k}')
 
 
-def switcher_fn(k, m):
-    f = switcher(k)
+def switcher_fn(k: str, m: dict):
+    """
+    Calls function in m which is the value of key k.
+
+    Example::
+
+        swtcher_fn('a', {
+            'a': lambda: print('first'),
+            'b': lambda: print('second')
+        })
+        # Output: first
+    """
+    f = switcher(k, m)
 
     return f()
 
