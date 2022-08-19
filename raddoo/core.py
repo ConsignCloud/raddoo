@@ -460,7 +460,7 @@ def always(val):
     return lambda *args, **kwargs: val
 
 
-def identity(val):
+def identity(val, *args, **kwargs):
     return val
 
 
