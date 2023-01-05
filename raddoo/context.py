@@ -39,6 +39,9 @@ class Context(Obj):
         self.unregister()
         self.register()
 
+    def on_exception(self, exc):
+        pass
+
     @_ctx.contextmanager
     def scoped(self):
         with scoped(self):
@@ -58,6 +61,11 @@ def scoped(*ctxs):
 
     try:
         yield
+    except Exception as exc:
+        for ctx in ctxs:
+            ctx.on_exception(exc)
+
+        raise
     finally:
         for ctx in ctxs:
             ctx.unregister()
